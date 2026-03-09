@@ -1,42 +1,99 @@
-const Provider = require('../models/Provider');
+const Provider = require("../models/Provider");
+const Booking = require("../models/Booking");
 
 /* ================= REGISTER PROVIDER ================= */
-exports.registerProvider = async (from, name, service, location) => {
 
-  const newProvider = new Provider({
-    whatsappNumber: from,
+exports.registerProvider = async (whatsappNumber, name, serviceType, location) => {
+  if (
+    !location ||
+    !Number.isFinite(location.latitude) ||
+    !Number.isFinite(location.longitude)
+  ) {
+    throw new Error("Valid location is required");
+  }
+
+  const existing = await Provider.findOne({ whatsappNumber });
+
+  if (existing) {
+    existing.name = name;
+    existing.serviceType = serviceType;
+    existing.location = {
+      type: "Point",
+      coordinates: [location.longitude, location.latitude]
+    };
+    existing.isActive = true;
+    await existing.save();
+    return existing;
+  }
+
+  const provider = new Provider({
+    whatsappNumber,
     name,
-    serviceType: service,
+    serviceType,
     location: {
       type: "Point",
       coordinates: [location.longitude, location.latitude]
     }
   });
 
-  await newProvider.save();
-  return newProvider;
+  await provider.save();
+  return provider;
 };
 
-/* ================= UPDATE AVAILABILITY ================= */
-exports.updateAvailability = async (from, option) => {
+/* ================= UPDATE LOCATION ================= */
 
-  const provider = await Provider.findOne({ whatsappNumber: from });
+exports.updateLocation = async (whatsappNumber, location) => {
+  if (
+    !location ||
+    !Number.isFinite(location.latitude) ||
+    !Number.isFinite(location.longitude)
+  ) {
+    throw new Error("Valid location is required");
+  }
+
+  const provider = await Provider.findOne({ whatsappNumber });
+
   if (!provider) return null;
 
-  if (option === "1") provider.availability = "available";
-  else if (option === "2") provider.availability = "unavailable";
-  else return "INVALID";
+  provider.location = {
+    type: "Point",
+    coordinates: [location.longitude, location.latitude]
+  };
 
   await provider.save();
-  return provider.availability;
+  return provider;
 };
 
+
+/*  ================= UPDATE AVAILABILITY ================= */
+
+exports.updateAvailability = async (whatsappNumber, status) => {
+
+  const provider = await Provider.findOne({ whatsappNumber });
+
+  if (!provider) return null;
+
+  provider.availability = status;
+  await provider.save();
+
+  return provider;
+};
+
+
 /* ================= GET ACTIVE BOOKINGS ================= */
+
 exports.getActiveBookings = async (providerId) => {
-  const Booking = require('../models/Booking');
 
   return await Booking.find({
     providerId,
     status: { $in: ["pending", "accepted"] }
   });
+};
+
+
+/* ================= GET PROVIDER PROFILE ================= */
+
+exports.getProviderProfile = async (whatsappNumber) => {
+
+  return await Provider.findOne({ whatsappNumber });
 };

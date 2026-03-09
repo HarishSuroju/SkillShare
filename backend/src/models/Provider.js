@@ -10,6 +10,12 @@ const providerSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  serviceType: {
+    type: String,
+    required: true,
+    trim: true,
+    default: "General"
+  },
   location: {
     type: {
       type: String,

@@ -14,6 +14,19 @@ exports.setState = (user, newState) => {
   };
 };
 
-exports.clearState = (user) => {
+exports.clearState = (user, options = {}) => {
+  const preserveRole = options.preserveRole !== false;
+  const currentState = userStates[user];
+
+  if (!currentState) return;
+
+  if (preserveRole && currentState.activeRole) {
+    userStates[user] = {
+      step: "START",
+      activeRole: currentState.activeRole
+    };
+    return;
+  }
+
   delete userStates[user];
 };

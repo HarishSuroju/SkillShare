@@ -10,9 +10,8 @@ const bookingSchema = new mongoose.Schema({
     ref: 'Provider',
     required: true
   },
-  serviceId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Service',
+  serviceType: {
+    type: String,
     required: true
   },
   status: {
